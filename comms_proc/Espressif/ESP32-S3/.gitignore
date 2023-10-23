@@ -1,0 +1,6 @@
+build
+sdkconfig
+sdkconfig.old
+esp32-connect.sublime-project
+esp32-connect.sublime-workspace
+

@@ -1,0 +1,102 @@
+menu "ESP32 FPGA Config"
+
+	config ESP32_FPGA_DEFAULT_TZ
+		string "Default time zone"
+		default "CET-1CST,M3.5.0/02:00:00,M10.5.0/03:00:00"
+
+	config ESP32_FPGA_NTP_SERVER
+		string "NTP server name"
+		default "pool.ntp.org"
+
+	config ESP32_FPGA_SKIP_COMMON_NAME_CHECK
+		bool "Skip server certificate CN fieldcheck"
+		default n
+		help
+			This allows you to skip the validation of OTA server certificate CN field.
+
+	config ESP32_FPGA_OTA_RECV_TIMEOUT
+		int "OTA Receive Timeout"
+		default 5000
+		help
+			Maximum time for reception
+
+	menu "Communications Processor UART"
+
+		config COMMS_PROC_UART_TX_GPIO
+			int "Communications processor UART TX GPIO number"
+			default 11
+			help
+				UART TX for communications processor
+		config COMMS_PROC_UART_RX_GPIO
+			int "Communications processor UART RX GPIO number"
+			default 12
+			help
+				UART RX for communications processor
+	endmenu
+
+	menu "SSD1306 OLED"	
+
+		config OLED_ENABLE
+			bool "Use SSD1306 OLED module"
+			default y 
+			help
+				Use SSD1306 OLED display
+
+		config OLED_GPIO_SCL
+			int "OLED I2C SCL GPIO number"
+			default 8
+			help
+				I2C SCL number ESP32 22 ESP32C3 18
+
+		config OLED_GPIO_SDA
+			int "OLED I2C SDA GPIO number"
+			default 9
+			help
+				I2C SDA number ESP32 21 ESP32C3 19
+
+		config OLED_I2C_ADDRESS
+			hex "OLED I2C Address"
+			default 0x3D
+			help
+				Adafruit 0x3D Amazon generic 0x3C
+	endmenu
+
+        menu "SD Filesystem"
+
+		config SD_FS_ENABLE
+			bool "Use SD card filesystem"
+			default y 
+			help
+				Enable external SD card filesystem
+		
+		config SD_FS_GPIO_MISO
+			int "SPI MISO GPIO number"
+			default 4 
+			help
+				SPI MISO GPIO number ESP32 18 ESP32C3 5
+
+		config SD_FS_GPIO_MOSI
+			int "SPI MOSI GPIO number"
+			default 7 
+			help
+				SPI MOSI GPIO number ESP32 23 ESP32C3 6
+
+		config SD_FS_GPIO_CLK
+			int "SPI CLK GPIO number"
+			default 6 
+			help
+				SPI CLK GPIO number ESP32 19 ESP32C3 4
+
+		config SD_FS_GPIO_CS
+			int "SPI CS GPIO number"
+			default 5 
+			help
+				SPI CS GPIO number ESP32 13 ESP32C3 7
+
+		config SD_FS_MOUNT_POINT
+			string "SD card mount point"
+			default "/sdcard"
+			help
+				SD card mount point
+	endmenu
+endmenu

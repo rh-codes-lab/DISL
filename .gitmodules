@@ -1,0 +1,3 @@
+[submodule "comms_proc/Espressif/ESP32-S3/main/frozen"]
+	path = comms_proc/Espressif/ESP32-S3/main/frozen
+	url = https://github.com/cesanta/frozen
