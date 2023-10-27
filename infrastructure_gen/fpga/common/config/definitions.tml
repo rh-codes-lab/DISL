@@ -1,0 +1,215 @@
+# If a signal width is 0 (e.g. mask_width = 0), the signal is not used in the protocol and does not need to be assigned
+[NAMESPACES]
+MODULE = []
+BOARD = ["ddr","led","clk_i","sw","ddr","uart_rx", "uart_tx"]
+CONSTANT = []
+CUSTOM = []
+PARAMETER = []
+INTERNAL = []
+SYSTEM = []
+BUSCONTENTION = []
+
+[INTERCONNECTS]
+TYPES = ["ONE_TO_MANY", "ONE_TO_ONE"]
+[INTRINSICS]
+ASSIGNMENT = "wire [%{CUSTOM_SIGNAL_WIDTH} - 1 :0] %{CUSTOM_SIGNAL_NAME}; assign %{CUSTOM_SIGNAL_NAME} = %{INPUT_SIGNAL}%{SIGNAL_BITS};"
+COMBINATIONAL = "wire [%{CUSTOM_SIGNAL_WIDTH} - 1 :0] %{CUSTOM_SIGNAL_NAME}; assign %{CUSTOM_SIGNAL_NAME} = %{INPUT_SIGNAL_1} %{OPERATION} %{INPUT_SIGNAL_2};"
+COMBINATIONAL_MUX = "wire [%{CUSTOM_SIGNAL_WIDTH} - 1 :0] %{CUSTOM_SIGNAL_NAME}; assign %{CUSTOM_SIGNAL_NAME} = %{CONDITION} ?  %{INPUT_SIGNAL_1} : %{INPUT_SIGNAL_2};"
+SEQUENTIAL_HOLD = "wire [%{CUSTOM_SIGNAL_WIDTH} -1: 0] %{CUSTOM_SIGNAL_NAME};\nreg [%{CUSTOM_SIGNAL_WIDTH} -1: 0] %{INTERNAL_SIGNAL_NAME};\ninitial %{INTERNAL_SIGNAL_NAME} = %{CUSTOM_SIGNAL_DEFAULT_VALUE};\nalways @(posedge %{CLOCK})\n\t%{INTERNAL_SIGNAL_NAME} <= %{TRIGGER} ? %{HOLD_VALUE} : %{CUSTOM_SIGNAL_NAME};\nassign %{CUSTOM_SIGNAL_NAME} = %{TRIGGER} ? %{HOLD_VALUE} : %{INTERNAL_SIGNAL_NAME};"
+SEQUENTIAL_IFELSEIF = "reg [%{CUSTOM_SIGNAL_WIDTH} -1: 0] %{CUSTOM_SIGNAL_NAME};\ninitial %{CUSTOM_SIGNAL_NAME} = %{CUSTOM_SIGNAL_DEFAULT_VALUE};\nalways @(posedge %{CLOCK}) begin \n\tif (%{CONDITION_1})\n\t\t%{CUSTOM_SIGNAL_NAME} <= %{ASSIGNMENT_IF_CONDITION_1_TRUE};\n\telse if (%{CONDITION_2})\n\t\t%{CUSTOM_SIGNAL_NAME} <= %{ASSIGNMENT_IF_CONDITION_2_TRUE};\nend"
+COMBINATIONAL_MUX_NODECL = "assign %{OUTPUT_SIGNAL} = %{CONDITION} ?  %{INPUT_SIGNAL_1} : %{INPUT_SIGNAL_2};"
+
+[HANDSHAKES]
+	TYPES = ["READ_ADDRESS", "READ_DATA", "READ_RESPONSE", "WRITE_ADDRESS", "WRITE_DATA", "WRITE_RESPONSE", "READ_RESPONSE_ADDRESS","NONE"]
+	DIRECTIONS = ["REQUEST", "RESPONSE", "BIDIR"] # REQUEST from Source to Sink, RESPONSE from Sink to Source
+
+
+[PROTOCOLS]
+	[PROTOCOLS.STREAM]
+		[PROTOCOLS.STREAM.WIDTHS]
+			"ready" = 1
+			"valid" = 1
+			"data" = "DATA_WIDTH"
+		[PROTOCOLS.STREAM.HANDSHAKES]
+			[PROTOCOLS.STREAM.HANDSHAKES.READ_DATA]
+				DIRECTION = "RESPONSE"
+				READY = "ready"
+				VALID = "valid"
+				FRAME = ["data"]
+			[PROTOCOLS.STREAM.HANDSHAKES.WRITE_DATA]
+				DIRECTION = "REQUEST"
+				READY = "ready"
+				VALID = "valid"
+				FRAME = ["data"]
+	[PROTOCOLS.SIMPLE]
+		[PROTOCOLS.SIMPLE.WIDTHS]
+			"read" =  1
+			"write" = 1
+			"address" = "ADDRESS_WIDTH"
+			"wrdata" = "DATA_WIDTH"
+			"wrstrb" = "MASK_WIDTH"
+			"rdvalid" = 1
+			"rddata" = "DATA_WIDTH"
+			"rdaddress" = "ADDRESS_WIDTH"
+			"ready" = 1
+		[PROTOCOLS.SIMPLE.HANDSHAKES]
+			[PROTOCOLS.SIMPLE.HANDSHAKES.READ_DATA]
+				DIRECTION = "RESPONSE"
+				READY = 1
+				VALID = "rdvalid"
+				FRAME = ["rddata"]
+			[PROTOCOLS.SIMPLE.HANDSHAKES.WRITE_DATA]
+				DIRECTION = "REQUEST"
+				READY = "ready"
+				VALID = "write"
+				FRAME = ["wrdata", "wrstrb"]
+			[PROTOCOLS.SIMPLE.HANDSHAKES.READ_ADDRESS]
+				DIRECTION = "REQUEST"
+				READY = "ready"
+				VALID = "read"
+				FRAME = ["address"]
+			[PROTOCOLS.SIMPLE.HANDSHAKES.WRITE_ADDRESS]
+				DIRECTION = "REQUEST"
+				READY = "ready"
+				VALID = "write"
+				FRAME = ["address"]
+			[PROTOCOLS.SIMPLE.HANDSHAKES.READ_RESPONSE_ADDRESS]
+				DIRECTION = "RESPONSE"
+				READY = 1
+				VALID = "rdvalid"
+				FRAME = ["rdaddress"]
+		[PROTOCOLS.SIMPLE.BUS_CONTENTION]
+			[[PROTOCOLS.SIMPLE.BUS_CONTENTION."address"]]
+				HANDSHAKES = ["READ_ADDRESS", "WRITE_ADDRESS"]
+				RESOLUTION = "assign %{address} = %{read} ? %{READ_ADDRESS:address} : %{WRITE_ADDRESS:address};"
+			[[PROTOCOLS.SIMPLE.BUS_CONTENTION."write"]]
+				HANDSHAKES = ["WRITE_DATA", "WRITE_ADDRESS"]
+				RESOLUTION = "assign %{write} = %{WRITE_DATA:write} | %{WRITE_ADDRESS:write};"
+			[[PROTOCOLS.SIMPLE.BUS_CONTENTION."ready"]]
+				HANDSHAKES = ["WRITE_DATA", "WRITE_ADDRESS", "READ_ADDRESS"]
+				RESOLUTION = "assign %{ready} = %{WRITE_DATA:ready} & %{WRITE_ADDRESS:ready} & %{READ_ADDRESS:ready};"
+	[PROTOCOLS.CONFIGURATION]
+		[PROTOCOLS.CONFIGURATION.WIDTHS]
+			"word" =  "DATA_WIDTH"
+			"addr" = "ADDRESS_WIDTH"
+			"valid" = 1
+		[PROTOCOLS.CONFIGURATION.HANDSHAKES]
+			[PROTOCOLS.CONFIGURATION.HANDSHAKES.WRITE_DATA]
+				DIRECTION = "REQUEST"
+				READY = 1
+				VALID = "valid"
+				FRAME = ["word"]
+			[PROTOCOLS.CONFIGURATION.HANDSHAKES.WRITE_ADDRESS]
+				DIRECTION = "REQUEST"
+				READY = 1
+				VALID = ""
+				FRAME = ["addr"]
+	[PROTOCOLS.AXIMML]
+		[PROTOCOLS.AXIMML.WIDTHS]
+			"axi_araddr" = "ADDRESS_WIDTH"
+			"axi_arvalid" = 1
+			"axi_arready" = 1
+			"axi_awaddr" = "ADDRESS_WIDTH"
+			"axi_awvalid" = 1
+			"axi_awready" = 1
+			"axi_rdata" = "DATA_WIDTH"
+			"axi_rvalid" = 1
+			"axi_rready" = 1
+			"axi_wdata" = "DATA_WIDTH"
+			"axi_wstrb" = "MASK_WIDTH"
+			"axi_wvalid" = 1
+			"axi_wready" = 1
+			"b_ready" = 1
+			"b_response" = 2
+			"b_valid" = 1
+		[PROTOCOLS.AXIMML.HANDSHAKES]
+			[PROTOCOLS.AXIMML.HANDSHAKES.READ_DATA]
+				DIRECTION = "RESPONSE"
+				READY = "axi_rready"
+				VALID = "axi_rvalid"
+				FRAME = ["axi_rdata"]
+			[PROTOCOLS.AXIMML.HANDSHAKES.WRITE_DATA]
+				DIRECTION = "REQUEST"
+				READY = "axi_wready"
+				VALID = "axi_wvalid"
+				FRAME = ["axi_wdata", "axi_wstrb"]
+			[PROTOCOLS.AXIMML.HANDSHAKES.READ_ADDRESS]
+				DIRECTION = "REQUEST"
+				READY = "axi_arready"
+				VALID = "axi_arvalid"
+				FRAME = ["axi_araddr"]
+			[PROTOCOLS.AXIMML.HANDSHAKES.WRITE_ADDRESS]
+				DIRECTION = "REQUEST"
+				READY = "axi_awready"
+				VALID = "axi_awvalid"
+				FRAME = ["axi_awaddr"]
+			[PROTOCOLS.AXIMML.HANDSHAKES.WRITE_RESPONSE]
+				DIRECTION = "RESPONSE"
+				READY = "b_ready"
+				VALID = "b_valid"
+				FRAME = ["b_response"]
+	[PROTOCOLS.DDR]
+		[PROTOCOLS.DDR.WIDTHS]
+			"reset_n" = 1
+			"ck_p" = "CK_WIDTH"
+			"ck_n" = "CK_WIDTH"
+			"cke" = "CKE_WIDTH"
+			"cs_n" = "CS_WIDTH"
+			"ras_n" = 1
+			"cas_n" = 1
+			"we_n" = 1
+			"dm" = "MASK_WIDTH"
+			"ba" = "BANK_WIDTH"
+			"addr" = "ADDRESS_WIDTH"
+			"dq" = "DATA_WIDTH"
+			"dqs_p" = "DQS_WIDTH"
+			"dqs_n" = "DQS_WIDTH"
+			"odt" = "ODT_WIDTH"
+		[PROTOCOLS.DDR.HANDSHAKES]
+			[PROTOCOLS.DDR.HANDSHAKES.NONE]
+				REQUEST = ["reset_n","ck_p","ck_n","cke","cs_n","ras_n","cas_n","we_n","dm","ba","addr","odt"]
+				RESPONSE = []
+				BIDIR = ["dq","dqs_p","dqs_n"]
+	[PROTOCOLS.I2C]
+		[PROTOCOLS.I2C.WIDTHS]
+			"sda" = 1
+			"scl" = 1
+			"sdapup" = 1
+			"sclpup" = 1
+		[PROTOCOLS.I2C.HANDSHAKES]
+			[PROTOCOLS.I2C.HANDSHAKES.NONE]
+				REQUEST = ["scl","sdapup","sclpup"]
+				RESPONSE = []
+				BIDIR = ["sda"]
+	[PROTOCOLS.SPI]
+		[PROTOCOLS.SPI.WIDTHS]
+			"sck" = 1
+			"miso" = 1
+			"mosi" = 1
+			"cs" = 1
+		[PROTOCOLS.SPI.HANDSHAKES]
+			[PROTOCOLS.SPI.HANDSHAKES.NONE]
+				REQUEST = ["sck","mosi","cs"]
+				RESPONSE = ["miso"]
+				BIDIR = []
+	[PROTOCOLS.PCPI]
+		[PROTOCOLS.PCPI.WIDTHS]
+			"valid" = 1
+			"insn" = "WORD_WIDTH"
+			"rs1" = "WORD_WIDTH"
+			"rs2" = "WORD_WIDTH"
+			"wr" = 1
+			"rd" = "WORD_WIDTH"
+			"wait" = 1
+			"ready" = 1
+		[PROTOCOLS.PCPI.HANDSHAKES]
+			[PROTOCOLS.PCPI.HANDSHAKES.READ_DATA]
+				DIRECTION = "RESPONSE"
+				READY = 1
+				VALID = "ready"
+				FRAME = ["rd", "wr", "wait"]
+			[PROTOCOLS.PCPI.HANDSHAKES.WRITE_DATA]
+				DIRECTION = "REQUEST"
+				READY = 1
+				VALID = "valid"
+				FRAME = ["insn", "rs1", "rs2"]

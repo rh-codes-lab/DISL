@@ -1,0 +1,593 @@
+[cache]
+	TYPE = ["MEMORY"]
+	PARAMETERS = ["CACHE_SIZE", "SET_SIZE", "CACHE_POLICY_RESET", "ADDR_WIDTH", 
+				  "CPU_DATA_WIDTH", "MEM_DATA_WIDTH", 
+				  "CONFIGURATION_DATA_BITS", "CONFIGURATION_ADDR_BITS", 
+				  "CONFIGADDR_START_CACHE_POLICY", "CONFIGADDR_END_CACHE_POLICY"]
+	[cache.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "config", "cpu", "mem"]
+		[cache.REQUIREMENTS.INCLUDES]
+			COMMON = ["cache.v"]
+			BOARD = []
+	[cache.ENCODINGS]
+		[cache.ENCODINGS.CACHE_POLICY]
+			WRITE_THROUGH = 1
+			WRITE_BACK = 2
+			READ_ONLY = 0
+	[cache.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[cache.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[cache.INTERFACES.config]
+			TYPE = "CONFIGURATION"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			ADDRESS_WIDTH = "CONFIGURATION_ADDR_BITS"
+			DATA_WIDTH = "CONFIGURATION_DATA_BITS"
+			[cache.INTERFACES.config.LAYOUT.cache]
+				START_PARAMETER = "CONFIGADDR_START_CACHE_POLICY"
+				END_PARAMETER = "CONFIGADDR_END_CACHE_POLICY"
+				SIZE = 1
+				INITIALIZATION = ""
+				[cache.INTERFACES.config.LAYOUT.cache.MAP]
+						"policy" = 0
+	[cache.INTERFACES.cpu]
+			TYPE = "SIMPLE"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			DATA_WIDTH = "CPU_DATA_WIDTH"
+			MASK_WIDTH = "CPU_DATA_WIDTH >> 3"
+	[cache.INTERFACES.mem]
+			TYPE = "SIMPLE"
+			DIRECTION = "SOURCE"
+			CLOCK = "clk"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			DATA_WIDTH = "MEM_DATA_WIDTH"
+			MASK_WIDTH = "MEM_DATA_WIDTH >> 3"
+	[cache.INTERFACES.state]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 8
+#######################################################################
+[cache_line_builder]
+	TYPES = ["SIMPLE"]
+	PARAMETERS = ["ADDR_WIDTH", "DEVICE_DATA_BUS_WIDTH", "CACHE_LINE_SIZE", "DEVICE_DATA_WIDTH"]
+	[cache_line_builder.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "host", "device"]
+		[cache_line_builder.REQUIREMENTS.INCLUDES]
+			COMMON = ["cache.v"]
+			BOARD = []
+	[cache_line_builder.ENCODINGS]
+	[cache_line_builder.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[cache_line_builder.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[cache_line_builder.INTERFACES.host]
+			TYPE = "SIMPLE"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			DATA_WIDTH = "CACHE_LINE_SIZE"
+			MASK_WIDTH = "CACHE_LINE_SIZE >> 3"
+	[cache_line_builder.INTERFACES.device]
+			TYPE = "SIMPLE"
+			DIRECTION = "SOURCE"
+			CLOCK = "clk"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			DATA_WIDTH = "DEVICE_DATA_WIDTH"
+			MASK_WIDTH = "DEVICE_DATA_WIDTH >> 3"
+	[cache_line_builder.INTERFACES.state]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 8
+#######################################################################
+[ddr_controller]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["TIMERID_0","TIMERID_TRP","TIMERID_TRCD","TIMERID_TRTP_TWR_TRAS","TIMERID_TCCD",
+			   "CONFIGURATION_DATA_BITS","CONFIGURATION_ADDR_BITS",
+			   "ENABLE_PERFTUNER", "TRANSACTION_DELAY","ADDRESS_FORMAT_RESET","AP_BIT_RESET","AUTO_PRECHARGE_IDLE_ROW_EN_RESET",
+			   "AUTO_PRECHARGE_IDLE_ROW_LIMIT_RESET", "AUTO_ACTIVATE_IDLE_BANK_EN_RESET","MAX_REFRESH_DEBT","SIMULATION","AP","CKE_BITS", 
+			   "CK_BITS", "CS_BITS", "ODT_BITS", "DM_BITS","DQS_BITS", "DQ_BITS", "DDR_ADDR_BITS", "DDR_BA_WIDTH","DDR_ROW_WIDTH","DDR_COL_WIDTH","BURST_SIZE",
+			   "TIMER_TCCD_RESET","TIMER_TRP_RESET", "TIMER_TRP_AP_RESET","TIMER_TRTP_RESET","TIMER_TRCD_RESET","TIMER_TRAS_RESET","TIMER_TREFI_RESET",
+			   "TIMER_TRFC_RESET", "TIMER_TWTR_RESET","TIMER_TRTW_RESET","TIMER_TWR_RESET","CMD_READ","CMD_WRITE","CMD_ACTIVATE","CMD_PRECHARGE",
+			   "CMD_REFRESH","COMMAND_WORD", "MACRO_WORD", "MACRO_COUNT_BITS","TIMER_BITS","NUM_SLOTS",
+			   "USER_ADDR_WIDTH","USER_MASK_WIDTH","USER_DATA_WIDTH", "MACRO_CONFIG_WORDS_NEEDED","MACRO_CONFIG_BITS_NEEDED",
+			   "REFRESH_RULES_INIT_HEX","RUNTIME_RULES_INIT_HEX","ARBITER_RULES_INIT_HEX",
+			   "CONFIGADDR_START_TIMERS","CONFIGADDR_END_TIMERS","CONFIGADDR_START_RUNTIME_RULES","CONFIGADDR_END_RUNTIME_RULES",
+			   "CONFIGADDR_START_REFRESH_RULES","CONFIGADDR_END_REFRESH_RULES","CONFIGADDR_START_ARBITER","CONFIGADDR_END_ARBITER",
+			   "CONFIGADDR_START_ADDRESS_FORMAT","CONFIGADDR_END_ADDRESS_FORMAT","CONFIGADDR_START_PERFTUNER","CONFIGADDR_END_PERFTUNER"]
+	[ddr_controller.REQUIREMENTS]
+		INTERFACES = ["clk_i", "rst_i", "config", "r", "ddr"]
+		[ddr_controller.REQUIREMENTS.INCLUDES]
+			COMMON = ["ddr.v"]
+			BOARD = ["ddr_phy.v", "ddr_command_loader.v"]
+	[ddr_controller.ENCODINGS]
+		[ddr_controller.ENCODINGS.chip_command_word]
+			[ddr_controller.ENCODINGS.chip_command_word.ras_n]
+				ENABLE =  0
+				DISABLE = 1
+				BITS =  [0]
+			[ddr_controller.ENCODINGS.chip_command_word.cas_n]
+				ENABLE =  0
+				DISABLE = 2
+				BITS =  [1]
+			[ddr_controller.ENCODINGS.chip_command_word.we_n]
+				ENABLE =  0
+				DISABLE = 4
+				BITS =  [2]
+			[ddr_controller.ENCODINGS.chip_command_word.cs_n]
+				ENABLE =  0
+				DISABLE = 8
+				BITS =  [3]
+		[ddr_controller.ENCODINGS.controller_command_word]
+			[ddr_controller.ENCODINGS.controller_command_word.chip_command_word]
+				0 = 0
+				1 = 1
+				2 = 2
+				3 = 3
+				4 = 4
+				5 = 5
+				6 = 6
+				7 = 7
+				8 = 8
+				9 = 9
+				10 = 10
+				11 = 11
+				12 = 12
+				13 = 13
+				14 = 14
+				15 = 15
+				BITS = [0,1,2,3]
+			[ddr_controller.ENCODINGS.controller_command_word.phy_command]
+				0 =  0
+				1 = 16
+				2 = 32
+				3 = 48
+				4 = 64
+				5 = 80
+				6 = 96
+				7 = 112
+				BITS =  [4,5,6]
+			[ddr_controller.ENCODINGS.controller_command_word.wrdata_en]
+				ENABLE =  128
+				DISABLE = 0
+				BITS =  [7]
+			[ddr_controller.ENCODINGS.controller_command_word.bank]
+				CURRENT =  256
+				IDLE = 0
+				BITS =  [8]
+			[ddr_controller.ENCODINGS.controller_command_word.address]
+				IDLE =  0
+				ROW =  512
+				COL = 1024
+				AP = 1536
+				BITS =  [9,10]
+		[ddr_controller.ENCODINGS.macro_word]
+			ADDRESS = ["WRITE_TRANSACTION_REQUESTED", "ROW_IS_OPEN", "BANK_IS_PRECHARGED"]
+			ENCODING = ["COMMAND_SLOT", "TIMER", "RUNTIME_COMMAND"]
+		[ddr_controller.ENCODINGS.command]
+			ADDRESS_WIDTH = 11
+		[ddr_controller.ENCODINGS.refresh]
+			ADDRESS_WIDTH = 1
+		[ddr_controller.ENCODINGS.macro]
+			ADDRESS_WIDTH = 3
+	[ddr_controller.INTERFACES]
+		[ddr_controller.INTERFACES.clk_i]
+				TYPE = "CLOCK"
+				DIRECTION = "SINK"
+		[ddr_controller.INTERFACES.ui_clk]
+				TYPE = "CLOCK"
+				DIRECTION = "SOURCE"
+		[ddr_controller.INTERFACES.rst_i]
+				TYPE = "GENERAL"
+				WIDTH = 1
+				DIRECTION = "SINK"
+		[ddr_controller.INTERFACES.ui_rst]
+				TYPE = "GENERAL"
+				WIDTH = 1
+				DIRECTION = "SOURCE"
+		[ddr_controller.INTERFACES.config]
+				TYPE = "CONFIGURATION"
+				DIRECTION = "SINK"
+				CLOCK = "ui_clk"
+				ADDRESS_WIDTH = "CONFIGURATION_ADDR_BITS"
+				DATA_WIDTH = "CONFIGURATION_DATA_BITS"
+				[ddr_controller.INTERFACES.config.layout]
+					[ddr_controller.INTERFACES.config.layout.ddr_controller]
+						START_PARAMETER = ""
+						END_PARAMETER = ""
+						SIZE = 0
+						INITIALIZATION = ""
+					[ddr_controller.INTERFACES.config.LAYOUT.ddr_timer_db]
+						START_PARAMETER = "CONFIGADDR_START_TIMERS"
+						END_PARAMETER = "CONFIGADDR_END_TIMERS"
+						SIZE = 12
+						INITIALIZATION = ""
+						[ddr_controller.INTERFACES.config.LAYOUT.ddr_timer_db.MAP]
+							"tccd" = 0
+							"trp" = 1
+							"trcd" = 2
+							"tras" = 3
+							"trefi" = 4
+							"trfc" = 5
+							"twtr" = 6
+							"trtw" = 7
+							"twr" = 8
+							"trtp" = 9
+							"trp_ap" = 10
+							"refresh_debt" = 11
+					[ddr_controller.INTERFACES.config.LAYOUT.ddr_runtime_rules]
+						START_PARAMETER = "CONFIGADDR_START_RUNTIME_RULES"
+						END_PARAMETER = "CONFIGADDR_END_RUNTIME_RULES"
+						SIZE = "8 * math.ceil ( MACRO_WORD / CONFIGURATION_DATA_BITS )"
+						INITIALIZATION = "RUNTIME_RULES_INIT_HEX"
+						[ddr_controller.INTERFACES.config.LAYOUT.ddr_runtime_rules.MAP]
+							"runtime_rules" = 0
+					[ddr_controller.INTERFACES.config.LAYOUT.ddr_refresh]
+						START_PARAMETER = "CONFIGADDR_START_REFRESH_RULES"
+						END_PARAMETER = "CONFIGADDR_END_REFRESH_RULES"
+						SIZE = 2
+						INITIALIZATION = "REFRESH_RULES_INIT_HEX"
+						[ddr_controller.INTERFACES.config.LAYOUT.ddr_refresh.MAP]
+							"refresh_rules" = 0
+					[ddr_controller.INTERFACES.config.LAYOUT.ddr_arbiter]
+						START_PARAMETER = "CONFIGADDR_START_ARBITER"
+						END_PARAMETER = "CONFIGADDR_END_ARBITER"
+						SIZE = "2 ** ( DDR_BA_WIDTH + 2**( DDR_BA_WIDTH ))"
+						INITIALIZATION = "ARBITER_RULES_INIT_HEX"
+						[ddr_controller.INTERFACES.config.LAYOUT.ddr_arbiter.MAP]
+							"arbiter_rules" = 0
+					[ddr_controller.INTERFACES.config.LAYOUT.ddr_perftuner]
+						START_PARAMETER = "CONFIGADDR_START_PERFTUNER"
+						END_PARAMETER = "CONFIGADDR_END_PERFTUNER"
+						SIZE = 4
+						INITIALIZATION = ""
+						[ddr_controller.INTERFACES.config.LAYOUT.ddr_perftuner.MAP]
+							"auto_precharge_idle_row_en" = 0
+							"auto_precharge_idle_row_limit" = 1
+							"auto_activate_idle_bank_en" = 2
+							"ap_bit" = 3
+					[ddr_controller.INTERFACES.config.LAYOUT.ddr_address_map]
+						START_PARAMETER = "CONFIGADDR_START_ADDRESS_FORMAT"
+						END_PARAMETER = "CONFIGADDR_END_ADDRESS_FORMAT"
+						SIZE = 1
+						INITIALIZATION = ""
+						[ddr_controller.INTERFACES.config.LAYOUT.ddr_address_map.MAP]
+							"map_id" = 0
+		[ddr_controller.INTERFACES.r]
+				TYPE = "SIMPLE"
+				DIRECTION = "SINK"
+				CLOCK = "ui_clk"
+				ADDRESS_WIDTH = "USER_ADDR_WIDTH"
+				DATA_WIDTH = "USER_DATA_WIDTH"
+				MASK_WIDTH = "USER_MASK_WIDTH"
+		[ddr_controller.INTERFACES.ddr]
+				TYPE = "DDR"
+				DIRECTION = "SOURCE"
+				ADDRESS_WIDTH = "DDR_ADDR_BITS"
+				DATA_WIDTH = "DQ_BITS"
+				MASK_WIDTH = "DM_BITS"
+				CK_WIDTH = "CK_BITS"
+				CKE_WIDTH = "CKE_BITS"
+				BANK_WIDTH = "DDR_BA_WIDTH"
+				DQS_WIDTH = "DQS_BITS"
+				ODT_WIDTH = "ODT_BITS"
+				CS_WIDTH = "CS_BITS"
+#######################################################################
+[gpio_axi]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["ADDR_WIDTH", "DATA_WIDTH","NUM_LEDS", "NUM_SWITCHES"]
+	[gpio_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "a"]
+		[gpio_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v"]
+			BOARD = []
+	[gpio_axi.ENCODINGS]
+	[gpio_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[gpio_axi.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[gpio_axi.INTERFACES.a]
+			TYPE = "AXIMML"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			DATA_WIDTH = "DATA_WIDTH"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+	[gpio_axi.INTERFACES.sw]
+			TYPE = "GENERAL"
+			DIRECTION = "SINK"
+			WIDTH = "NUM_SWITCHES"
+	[gpio_axi.INTERFACES.led]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = "NUM_LEDS"
+#######################################################################
+[timer_axi]
+	TYPES = ["SIMPLE"]
+	PARAMETERS = ["ADDR_WIDTH", "DATA_WIDTH","TCKS_PER_US"]
+	[timer_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "a"]
+		[timer_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v"]
+			BOARD = []
+	[timer_axi.ENCODINGS]
+	[timer_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[timer_axi.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[timer_axi.INTERFACES.a]
+			TYPE = "AXIMML"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			DATA_WIDTH = "DATA_WIDTH"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+#######################################################################
+[uart_axi]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["ADDR_WIDTH","DATA_WIDTH","CLKS_PER_BIT"]
+	[uart_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "a"]
+		[uart_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v","fifo.v"]
+			BOARD = []
+	[uart_axi.ENCODINGS]
+	[uart_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[uart_axi.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[uart_axi.INTERFACES.a]
+			TYPE = "AXIMML"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			DATA_WIDTH = "DATA_WIDTH"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+	[uart_axi.INTERFACES.urx]
+			TYPE = "GENERAL"
+			DIRECTION = "SINK"
+			WIDTH = 1
+	[uart_axi.INTERFACES.utx]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 1
+#######################################################################
+[i2c_axi]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["ADDR_WIDTH","DATA_WIDTH","CLOCK_DIVISOR"]
+	[i2c_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "a", "sda", "scl", "scl_pup", "sda_pup"]
+		[i2c_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v"]
+			BOARD = ["tristate.v"]
+	[i2c_axi.ENCODINGS]
+	[i2c_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[i2c_axi.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[i2c_axi.INTERFACES.a]
+			TYPE = "AXIMML"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			DATA_WIDTH = "DATA_WIDTH"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+	[i2c_axi.INTERFACES.i2c]
+			TYPE = "I2C"
+			DIRECTION = "SOURCE"
+#######################################################################
+[spi_axi]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["ADDR_WIDTH","DATA_WIDTH","CLOCK_DIVISOR"]
+	[spi_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "a", "sck", "miso", "mosi"]
+		[spi_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v"]
+			BOARD = []
+	[spi_axi.ENCODINGS]
+	[spi_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[spi_axi.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[spi_axi.INTERFACES.a]
+			TYPE = "AXIMML"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			DATA_WIDTH = "DATA_WIDTH"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+	[spi_axi.INTERFACES.spi]
+			TYPE = "SPI"
+			DIRECTION = "SOURCE"
+#######################################################################
+[progloader_axi]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["MEM_ADDR_SIZE", "DATA_WIDTH", "SIMULATION", "CLKS_PER_BIT"]
+	[progloader_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "a", "urx", "reprogram", "busy"]
+		[progloader_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v"]
+			BOARD = []
+	[progloader_axi.ENCODINGS]
+	[progloader_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[progloader_axi.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[progloader_axi.INTERFACES.a]
+			TYPE = "AXIMML"
+			DIRECTION = "SOURCE"
+			CLOCK = "clk"
+			DATA_WIDTH = "DATA_WIDTH"
+			ADDRESS_WIDTH = "MEM_ADDR_SIZE"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+	[progloader_axi.INTERFACES.urx]
+			TYPE = "GENERAL"
+			DIRECTION = "SINK"
+			WIDTH = 1
+	[progloader_axi.INTERFACES.reprogram]
+			TYPE = "GENERAL"
+			DIRECTION = "SINK"
+			WIDTH = 1
+	[progloader_axi.INTERFACES.busy]
+			TYPE = "GENERAL"
+			DIRECTION = "SINK"
+			WIDTH = 1
+#######################################################################
+[picorv32_axi]
+	TYPES = ["CPU"]
+	PARAMETERS = ["PROGADDR_RESET","PROGADDR_IRQ","STACKADDR", "ENABLE_COUNTERS","ENABLE_COUNTERS64","ENABLE_REGS_16_31",
+				  "ENABLE_REGS_DUALPORT","TWO_STAGE_SHIFT","BARREL_SHIFTER","TWO_CYCLE_COMPARE","TWO_CYCLE_ALU","COMPRESSED_ISA",
+				  "CATCH_MISALIGN","CATCH_ILLINSN","ENABLE_PCPI","ENABLE_MUL","ENABLE_FAST_MUL","ENABLE_DIV","ENABLE_IRQ","ENABLE_IRQ_QREGS",
+				  "ENABLE_IRQ_TIMER","ENABLE_TRACE","REGS_INIT_ZERO","MASKED_IRQ","LATCHED_IRQ","ADDR_WIDTH","DATA_WIDTH", "PROGADDR_RESET", "PROGADDR_IRQ", "STACKADDR"]
+	[picorv32_axi.REQUIREMENTS]
+		INTERFACES = ["clk", "resetn", "mem", "irq"]
+		[picorv32_axi.REQUIREMENTS.INCLUDES]
+			COMMON = ["picorv32.v"]
+			BOARD = []
+	[picorv32_axi.ENCODINGS]
+	[picorv32_axi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[picorv32_axi.INTERFACES.resetn]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[picorv32_axi.INTERFACES.mem]
+			TYPE = "AXIMML"
+			DIRECTION = "SOURCE"
+			CLOCK = "clk"
+			DATA_WIDTH = 32
+			ADDRESS_WIDTH = 32
+			MASK_WIDTH = 4
+	[picorv32_axi.INTERFACES.pcpi]
+			TYPE = "PCPI"
+			DIRECTION = "SOURCE"
+			CLOCK = "clk"
+			WORD_WIDTH = 32
+	[picorv32_axi.INTERFACES.irq]
+			TYPE = "GENERAL"
+			DIRECTION = "SINK"
+			WIDTH = 32
+	[picorv32_axi.INTERFACES.eoi]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 32
+#######################################################################
+[jtag_chip_manager]
+	TYPES = ["PERIPHERAL"]
+	PARAMETERS = ["JTAG_USER_REG_ID"]
+	[jtag_chip_manager.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "control"]
+		[jtag_chip_manager.REQUIREMENTS.INCLUDES]
+			COMMON = ["jtag.v"]
+			BOARD = ["jtag_phy.v"]
+	[jtag_chip_manager.ENCODINGS]
+	[jtag_chip_manager.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[jtag_chip_manager.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[jtag_chip_manager.INTERFACES.control]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 96
+#######################################################################
+[bram]
+	TYPE = ["MEMORY"]
+	PARAMETERS = ["MEMORY_SIZE", "ADDR_WIDTH", "DATA_WIDTH"]
+	[bram.REQUIREMENTS]
+		INTERFACES = ["clk", "rst", "cpu"]
+		[bram.REQUIREMENTS.INCLUDES]
+			COMMON = ["cache.v"]
+			BOARD = []
+	[bram.ENCODINGS]
+	[bram.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[bram.INTERFACES.rst]
+			TYPE = "GENERAL"
+			WIDTH = 1
+			DIRECTION = "SINK"
+	[bram.INTERFACES.cpu]
+			TYPE = "SIMPLE"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			ADDRESS_WIDTH = "ADDR_WIDTH"
+			DATA_WIDTH = "DATA_WIDTH"
+			MASK_WIDTH = "DATA_WIDTH >> 3"
+#######################################################################
+[laplacian_rgb565_rv32_pcpi]
+	TYPES = ["INTERCONNECT"]
+	PARAMETERS = ["OPCODE", "IMAGE_WIDTH", "IMAGE_HEIGHT"]
+	[laplacian_rgb565_rv32_pcpi.REQUIREMENTS]
+		INTERFACES = ["clk", "pcpi"]
+		[laplacian_rgb565_rv32_pcpi.REQUIREMENTS.INCLUDES]
+			COMMON = ["riscv_ci.v"]
+			BOARD = []
+	[laplacian_rgb565_rv32_pcpi.ENCODINGS]
+	[laplacian_rgb565_rv32_pcpi.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[laplacian_rgb565_rv32_pcpi.INTERFACES.pcpi]
+			TYPE = "PCPI"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			WORD_WIDTH = 32
+#######################################################################
+[laplacian_rgb565_rv32_pcpi_full]
+	TYPES = ["INTERCONNECT"]
+	PARAMETERS = ["OPCODE", "IMAGE_WIDTH", "IMAGE_HEIGHT", "UART_TX_CLKS_PER_BIT", "SPI_CLOCK_DIVISOR"]
+	[laplacian_rgb565_rv32_pcpi_full.REQUIREMENTS]
+		INTERFACES = ["clk", "pcpi", "spi", "uart_tx", "busy"]
+		[laplacian_rgb565_rv32_pcpi_full.REQUIREMENTS.INCLUDES]
+			COMMON = ["soc_components.v","riscv_ci.v"]
+			BOARD = []
+	[laplacian_rgb565_rv32_pcpi_full.ENCODINGS]
+	[laplacian_rgb565_rv32_pcpi_full.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[laplacian_rgb565_rv32_pcpi_full.INTERFACES.pcpi]
+			TYPE = "PCPI"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			WORD_WIDTH = 32
+	[laplacian_rgb565_rv32_pcpi_full.INTERFACES.spi]
+			TYPE = "SPI"
+			DIRECTION = "SOURCE"
+	[laplacian_rgb565_rv32_pcpi_full.INTERFACES.uart_tx]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 1
+	[laplacian_rgb565_rv32_pcpi_full.INTERFACES.busy]
+			TYPE = "GENERAL"
+			DIRECTION = "SOURCE"
+			WIDTH = 1
+#######################################################################

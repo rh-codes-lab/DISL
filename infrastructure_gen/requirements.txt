@@ -1,0 +1,7 @@
+toml
+json
+libusb1==3.0.0
+pyserial==3.5
+numpy==1.24.3
+Pillow==9.2.0
+plotext==5.2.8

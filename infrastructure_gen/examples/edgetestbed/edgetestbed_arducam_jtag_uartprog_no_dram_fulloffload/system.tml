@@ -1,0 +1,348 @@
+[DESCRIPTION]
+NAME = "edgetestbed_arducam_jtag_uartprog_no_dram_fulloffload"
+
+[REQUIREMENTS]
+TOOLS = ["pyjtag"]
+BOARDS = ["cmoda735t"]
+
+[EXTERNAL_IO]
+PORTS = ["clk_i","sw","led","uart_tx","uart_rx", "i2c", "spi"]
+
+
+[INSTANTIATIONS]
+	[INSTANTIATIONS.cache]
+		MODULE = "bram"
+		PARAMETERS.MEMORY_SIZE = 256
+	[INSTANTIATIONS.gpio]
+		MODULE = "gpio_axi"
+	[INSTANTIATIONS.timer]
+		MODULE = "timer_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+	[INSTANTIATIONS.debug]
+		MODULE = "uart_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+		PARAMETERS.UART_BAUD_RATE_BPS = 921600
+		PARAMETERS.DATA_WIDTH = 32
+	[INSTANTIATIONS.i2cbus]
+		MODULE = "i2c_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+	[INSTANTIATIONS.spibus]
+		MODULE = "spi_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+		PARAMETERS.SPI_FREQ_MHZ = 2
+	[INSTANTIATIONS.chip_manager]
+		MODULE = "jtag_chip_manager"
+	[INSTANTIATIONS.programmer]
+		MODULE = "progloader_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+		PARAMETERS.UART_BAUD_RATE_BPS = 921600
+	[INSTANTIATIONS.filter]
+		MODULE = "laplacian_rgb565_rv32_pcpi_full"
+		PARAMETERS.OPCODE = 43
+		PARAMETERS.IMAGE_WIDTH = 320
+		PARAMETERS.IMAGE_HEIGHT = 240
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+		PARAMETERS.SPI_FREQ_MHZ = 6
+		PARAMETERS.UART_BAUD_RATE_BPS = 921600
+	[INSTANTIATIONS.cpu]
+		MODULE = "picorv32_axi"
+		ARCH = "rv32i"
+		ABI = "ilp32"
+		CROSS = "riscv32-unknown-elf-"
+		CROSSCFLAGS = "-O3 -Wno-int-conversion -ffreestanding -nostdlib"
+		CROSSLDFLAGS = "-ffreestanding -nostdlib  -Wl,-M"
+		LINKER_REQUIREMENTS = ["muldi3.S", "div.S", "riscv-asm.h"]
+		MEMORY = "cache"
+		PARAMETERS.ENABLE_INTERRUPTS = 0
+		PARAMETERS.ENABLE_PCPI = 1
+		PARAMETERS.INSTRUCTION_MEMORY_STARTING_ADDRESS = 0
+		PARAMETERS.INTERRUPT_HANDLER_STARTING_ADDRESS = 16
+		PARAMETERS.INSTRUCTION_AND_DATA_MEMORY_SIZE_BYTES = 32768
+		[INSTANTIATIONS.cpu.MAP]
+			[INSTANTIATIONS.cpu.MAP.cache]
+				ORIGIN = "0x00000000"
+				LENGTH = "0x00040000"
+			[INSTANTIATIONS.cpu.MAP.gpio]
+				ORIGIN = "0x00040000"
+				LENGTH = "0x00000004"
+			[INSTANTIATIONS.cpu.MAP.debug]
+				ORIGIN = "0x00040004"
+				LENGTH = "0x00000004"
+			[INSTANTIATIONS.cpu.MAP.timer]
+				ORIGIN = "0x00040008"
+				LENGTH = "0x00000004"
+			[INSTANTIATIONS.cpu.MAP.i2cbus]
+				ORIGIN = "0x0004000C"
+				LENGTH = "0x00000004"
+			[INSTANTIATIONS.cpu.MAP.spibus]
+				ORIGIN = "0x00040010"
+				LENGTH = "0x00000004"
+
+# All constant numbers must be strings for the remaining system
+
+
+[INTRINSICS]
+	[[INTRINSICS.ASSIGNMENT]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:jtag_reset"
+		INPUT_SIGNAL =  "MODULE:chip_manager:control"
+		SIGNAL_BITS = "[0]"
+	[[INTRINSICS.ASSIGNMENT]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:reprogram"
+		INPUT_SIGNAL =  "MODULE:chip_manager:control"
+		SIGNAL_BITS = "[1]"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_resetn"
+		INPUT_SIGNAL_1 =  "1'd1"
+		OPERATION = "^"
+		INPUT_SIGNAL_2 =  "CUSTOM:reprogram"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_mem_wvalid_and_wready"
+		INPUT_SIGNAL_1 =  "MODULE:cpu:mem:axi_wvalid"
+		OPERATION = "&"
+		INPUT_SIGNAL_2 =  "MODULE:cpu:mem:axi_wready"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_mem_wvalid_and_wready_resetn"
+		INPUT_SIGNAL_1 =  "CUSTOM:cpu_mem_wvalid_and_wready"
+		OPERATION = "&"
+		INPUT_SIGNAL_2 =  "CUSTOM:cpu_resetn"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:gpio:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:gpio_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:gpio:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.gpio.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:gpio:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:gpio_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:gpio:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.gpio.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:debug:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:debug_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:debug:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.debug.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:debug:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:debug_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:debug:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.debug.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:timer:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:timer_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:timer:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.timer.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:timer:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:timer_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:timer:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.timer.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:i2cbus:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:i2cbus_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:i2cbus:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.i2cbus.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:i2cbus:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:i2cbus_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:i2cbus:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.i2cbus.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:spibus:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:spibus_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:spibus:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.spibus.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:spibus:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:spibus_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:spibus:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.spibus.ORIGIN"
+	[[INTRINSICS.SEQUENTIAL_HOLD]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:cpu:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_axi_araddr"
+		INTERNAL_SIGNAL_NAME = "INTERNAL:CUSTOM:cpu_axi_araddr"
+		CUSTOM_SIGNAL_DEFAULT_VALUE = 0
+		CLOCK = "MODULE:cpu:clk"
+		TRIGGER = "MODULE:cpu:mem:axi_arvalid"
+		HOLD_VALUE = "MODULE:cpu:mem:axi_araddr"
+	[[INTRINSICS.SEQUENTIAL_HOLD]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:cpu:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_axi_awaddr"
+		INTERNAL_SIGNAL_NAME = "INTERNAL:CUSTOM:cpu_axi_awaddr"
+		CUSTOM_SIGNAL_DEFAULT_VALUE =  0
+		CLOCK = "MODULE:cpu:clk"
+		TRIGGER = "MODULE:cpu:mem:axi_awvalid"
+		HOLD_VALUE = "MODULE:cpu:mem:axi_awaddr"
+	[[INTRINSICS.SEQUENTIAL_IFELSEIF]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_mem_b_valid"
+		CUSTOM_SIGNAL_DEFAULT_VALUE =  0
+		CLOCK = "MODULE:cpu:clk"
+		CONDITION_1 = "CUSTOM:cpu_mem_wvalid_and_wready_resetn"
+		ASSIGNMENT_IF_CONDITION_1_TRUE = "1"
+		CONDITION_2 = "MODULE:cpu:mem:b_ready"
+		ASSIGNMENT_IF_CONDITION_2_TRUE = "0"
+	[[INTRINSICS.COMBINATIONAL_MUX]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:uart_tx_bus"
+		CONDITION = "MODULE:filter:busy"
+		INPUT_SIGNAL_1 =  "MODULE:filter:uart_tx"
+		INPUT_SIGNAL_2 =  "MODULE:debug:utx"
+	[[INTRINSICS.COMBINATIONAL_MUX_NODECL]]
+		OUTPUT_SIGNAL = "BOARD:spi:mosi"
+		CONDITION = "MODULE:filter:busy"
+		INPUT_SIGNAL_1 =  "MODULE:filter:spi:mosi"
+		INPUT_SIGNAL_2 =  "MODULE:spibus:spi:mosi"
+	[[INTRINSICS.COMBINATIONAL_MUX_NODECL]]
+		OUTPUT_SIGNAL = "BOARD:spi:cs"
+		CONDITION = "MODULE:filter:busy"
+		INPUT_SIGNAL_1 =  "MODULE:filter:spi:cs"
+		INPUT_SIGNAL_2 =  "MODULE:spibus:spi:cs"
+	[[INTRINSICS.COMBINATIONAL_MUX_NODECL]]
+		OUTPUT_SIGNAL = "BOARD:spi:sck"
+		CONDITION = "MODULE:filter:busy"
+		INPUT_SIGNAL_1 =  "MODULE:filter:spi:sck"
+		INPUT_SIGNAL_2 =  "MODULE:spibus:spi:sck"
+
+[INTERCONNECT]
+	STATIC = [
+				["BOARD:clk_i", "MODULE:cpu:clk","MODULE:cache:clk","MODULE:chip_manager:clk", "MODULE:debug:clk", "MODULE:timer:clk", "MODULE:gpio:clk", "MODULE:i2cbus:clk", "MODULE:spibus:clk","MODULE:programmer:clk","MODULE:filter:clk"],
+				["BOARD:uart_rx" , "MODULE:debug:urx", "MODULE:programmer:urx"],
+				["CUSTOM:uart_tx_bus","BOARD:uart_tx"],
+				["BOARD:led" ,"MODULE:gpio:led"],
+				["BOARD:sw" , "MODULE:gpio:sw"],
+				["BOARD:i2c","MODULE:i2cbus:i2c"],
+				["CUSTOM:cpu_resetn","MODULE:cpu:resetn"],
+				["CUSTOM:reprogram", "MODULE:gpio:rst", "MODULE:debug:rst", "MODULE:timer:rst", "MODULE:i2cbus:rst","MODULE:spibus:rst", "MODULE:programmer:reprogram"],
+				["CUSTOM:jtag_reset" , "MODULE:chip_manager:rst", "MODULE:cache:rst"],
+				["MODULE:cpu:pcpi","MODULE:filter:pcpi"]
+	]
+
+	OVERRIDES = [ # replace port signal assignments at the end with the overrides
+			["MODULE:cpu:mem:b_valid","CUSTOM:cpu_mem_b_valid"],
+			["MODULE:cpu:mem:b_response", "0"],
+			["MODULE:programmer:a:b_response", "0"],
+			["MODULE:programmer:a:b_valid", "1"],
+			["MODULE:cpu:irq", "0"],
+			["MODULE:gpio:a:axi_awaddr","CUSTOM:gpio_a_axi_awaddr"],
+			["MODULE:gpio:a:axi_araddr","CUSTOM:gpio_a_axi_araddr"],
+			["MODULE:debug:a:axi_awaddr","CUSTOM:debug_a_axi_awaddr"],
+			["MODULE:debug:a:axi_araddr","CUSTOM:debug_a_axi_araddr"],
+			["MODULE:i2cbus:a:axi_awaddr","CUSTOM:i2cbus_a_axi_awaddr"],
+			["MODULE:i2cbus:a:axi_araddr","CUSTOM:i2cbus_a_axi_araddr"],
+			["MODULE:timer:a:axi_awaddr","CUSTOM:timer_a_axi_awaddr"],
+			["MODULE:timer:a:axi_araddr","CUSTOM:timer_a_axi_araddr"],
+			["MODULE:i2cbus:i2c:sda","BOARD:i2c:sda"],
+			["MODULE:i2cbus:a:b_ready","1"],
+			["MODULE:spibus:a:axi_awaddr","CUSTOM:spibus_a_axi_awaddr"],
+			["MODULE:spibus:a:axi_araddr","CUSTOM:spibus_a_axi_araddr"],
+			["MODULE:spibus:a:b_ready","1"],
+			["MODULE:spibus:spi:miso","BOARD:spi:miso"],
+			["MODULE:filter:spi:miso","BOARD:spi:miso"]
+	]
+
+	[INTERCONNECT.DYNAMIC."MODULE:cpu:mem"]
+		GROUP_SELECT = "CUSTOM:reprogram"
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:cpu:mem".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_MANY"
+			SELECT_VALUE = 0
+			ADDRESS_MAP = [
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.cache MODULE:cache:cpu",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.gpio MODULE:gpio:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.debug MODULE:debug:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.timer MODULE:timer:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.i2cbus MODULE:i2cbus:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.spibus MODULE:spibus:a"
+			]
+			HANDSHAKE_MAP = [
+						"WRITE_ADDRESS MODULE:cpu:mem:axi_awaddr",
+						"READ_ADDRESS MODULE:cpu:mem:axi_araddr",
+						"WRITE_DATA CUSTOM:cpu_axi_awaddr",
+						"READ_DATA CUSTOM:cpu_axi_araddr"
+			]
+		[[INTERCONNECT.DYNAMIC."MODULE:cpu:mem".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_MANY"
+			SELECT_VALUE = 1
+			ADDRESS_MAP = [
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.gpio MODULE:gpio:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.debug MODULE:debug:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.timer MODULE:timer:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.i2cbus MODULE:i2cbus:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.spibus MODULE:spibus:a",
+			]
+			HANDSHAKE_MAP = [
+						"WRITE_ADDRESS MODULE:cpu:mem:axi_awaddr",
+						"READ_ADDRESS MODULE:cpu:mem:axi_araddr",
+						"WRITE_DATA CUSTOM:cpu_axi_awaddr",
+						"READ_DATA CUSTOM:cpu_axi_araddr"
+			]
+	
+		
+	[INTERCONNECT.DYNAMIC."MODULE:cache:cpu"]
+		GROUP_SELECT = "CUSTOM:reprogram"
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:cache:cpu".GROUPS]]
+			SELECT_VALUE = 0
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+		[[INTERCONNECT.DYNAMIC."MODULE:cache:cpu".GROUPS]]
+			SELECT_VALUE = 1
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:programmer:a"
+
+	[INTERCONNECT.DYNAMIC."MODULE:gpio:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:gpio:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+
+	[INTERCONNECT.DYNAMIC."MODULE:debug:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:debug:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+			
+	[INTERCONNECT.DYNAMIC."MODULE:i2cbus:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:i2cbus:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+			
+	[INTERCONNECT.DYNAMIC."MODULE:spibus:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:spibus:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+
+	[INTERCONNECT.DYNAMIC."MODULE:timer:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:timer:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+			
+
+	[INTERCONNECT.DYNAMIC."MODULE:programmer:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:programmer:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cache:cpu"

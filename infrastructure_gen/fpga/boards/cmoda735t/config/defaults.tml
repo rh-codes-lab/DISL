@@ -1,0 +1,11 @@
+[MODULES]
+	[MODULES.jtag_chip_manager]
+		JTAG_USER_REG_ID = 4
+	[MODULES.cache_line_builder]
+		DEVICE_DATA_BUS_WIDTH = 8
+		DEVICE_DATA_WIDTH = 8
+	[MODULES.gpio_axi]
+		NUM_LEDS = 5
+		NUM_SWITCHES = 2
+	[MODULES.sram_controller]
+		

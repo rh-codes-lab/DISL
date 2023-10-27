@@ -1,0 +1,114 @@
+# Chip and board description
+[DESCRIPTION]
+NAME = "Cmod_A735T"
+DIRECTORY = "cmoda735t"
+CHIP_VENDOR = "xilinx"
+BOARD_VENDOR = "Digilent"
+VENDOR.SRAM = ""
+FAMILY.SHORT = "xc7"
+FAMILY.LONG = "7series"
+PART.SHORT = "xc7a35t_0"
+PART.LONG = "xc7a35tcpg236-1"
+
+# include these files after the IPs have been generated. TCL generation script can figure out the path from build path
+[REQUIREMENTS]
+[REQUIREMENTS.FILES]
+[REQUIREMENTS.FILES."jtag_phy.v"]
+	HDL =[]
+	IP = []
+[REQUIREMENTS.FILES."tristate.v"]
+	HDL =[]
+	IP = []
+[REQUIREMENTS.FILES."sram_phy.v"]
+	HDL =[]
+	IP = []
+[REQUIREMENTS.IP]
+
+[IO]
+	[IO.clk_i]
+		DIRECTION = "SOURCE"
+		WIDTH = 1
+		INTERFACE_TYPE = "CLOCK"
+	[IO.sw]
+		DIRECTION = "SOURCE"
+		WIDTH = 2
+		INTERFACE_TYPE = "GENERAL"
+	[IO.led]
+		DIRECTION = "SINK"
+		WIDTH = 5
+		INTERFACE_TYPE = "GENERAL"
+	[IO.uart_rx]
+		DIRECTION = "SOURCE"
+		WIDTH = 1
+		INTERFACE_TYPE = "GENERAL"
+	[IO.uart_tx]
+		DIRECTION = "SINK"
+		WIDTH = 1
+		INTERFACE_TYPE = "GENERAL"
+	[IO.i2c]
+		INTERFACE_TYPE = "I2C"
+		DIRECTION = "SINK"
+		[IO.i2c.SIGNALS.sda]
+			WIDTH  = 1
+		[IO.i2c.SIGNALS.scl]
+			WIDTH  = 1
+		[IO.i2c.SIGNALS.sdapup]
+			WIDTH  = 1
+		[IO.i2c.SIGNALS.sclpup]
+			WIDTH  = 1
+	[IO.spi]
+		INTERFACE_TYPE = "SPI"
+		DIRECTION = "SINK"
+		[IO.spi.SIGNALS.sck]
+			WIDTH  = 1
+		[IO.spi.SIGNALS.cs]
+			WIDTH  = 1
+		[IO.spi.SIGNALS.miso]
+			WIDTH  = 1
+		[IO.spi.SIGNALS.mosi]
+			WIDTH  = 1
+	[IO.sram]
+		INTERFACE_TYPE = "SRAM"
+		DIRECTION = "SINK"
+
+[CONSTRAINTS]
+clk_i = "set_property -dict { PACKAGE_PIN L17    IOSTANDARD LVCMOS33 } [get_ports {clk_i}];"
+sw = """
+		set_property -dict { PACKAGE_PIN  A18   IOSTANDARD LVCMOS33 } [get_ports { sw[0] }];
+		set_property -dict { PACKAGE_PIN  B18  IOSTANDARD LVCMOS33 } [get_ports { sw[1] }];
+		"""
+led = """
+		set_property -dict { PACKAGE_PIN A17    IOSTANDARD LVCMOS33 } [get_ports { led[0] }]; 
+		set_property -dict { PACKAGE_PIN C16    IOSTANDARD LVCMOS33 } [get_ports { led[1] }];
+		set_property -dict { PACKAGE_PIN B17    IOSTANDARD LVCMOS33 } [get_ports { led[2] }];
+		set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports { led[3] }];
+		set_property -dict { PACKAGE_PIN C17   IOSTANDARD LVCMOS33 } [get_ports { led[4] }];
+		"""
+uart_tx = "set_property -dict { PACKAGE_PIN J18   IOSTANDARD LVCMOS33 } [get_ports { uart_tx }];"
+uart_rx = "set_property -dict { PACKAGE_PIN J17    IOSTANDARD LVCMOS33 } [get_ports { uart_rx }];"
+
+i2c = """ 
+set_property PACKAGE_PIN  K3 [get_ports i2c_sda]
+set_property IOSTANDARD LVCMOS33 [get_ports i2c_sda]
+set_property PACKAGE_PIN  A16  [get_ports i2c_scl]
+set_property IOSTANDARD LVCMOS33 [get_ports i2c_scl]
+set_property PACKAGE_PIN  L3 [get_ports i2c_sdapup]
+set_property IOSTANDARD LVCMOS33 [get_ports i2c_sdapup]
+set_property PACKAGE_PIN M3  [get_ports i2c_sclpup]
+set_property IOSTANDARD LVCMOS33 [get_ports i2c_sclpup]
+"""
+
+spi = """
+set_property PACKAGE_PIN  C15  [get_ports spi_sck]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_sck]
+set_property PACKAGE_PIN  H1 [get_ports spi_miso]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_miso]
+set_property PACKAGE_PIN A15  [get_ports spi_mosi]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi]
+set_property PACKAGE_PIN B15  [get_ports spi_cs]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_cs]
+"""
+
+sram = """ 
+
+"""
