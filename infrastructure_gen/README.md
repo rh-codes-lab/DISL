@@ -7,7 +7,7 @@
 - Python libraries given in ```requirements.txt```
 
 ## Quick start
-To generate, compile and deploy the hardware for an edge testbed example system, run the following command from the repo's root directory 
+To generate, compile and deploy the hardware for an edge testbed example system, run the following command from the infrastructure gen directory 
 ```console
 python configure.py --example_dir ./examples/edgetestbed --example <example> --board <cmoda735t|artya735t> --build_dir build
 cd build
