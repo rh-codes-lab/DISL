@@ -185,7 +185,7 @@ cp -r infrastructure_gen/examples/edgetestbed/edgetestbed_jtag_uartprog_no_dram 
 ```
 
 ## Step 4: Modify the system definition file
-The example we copied over was targeting the same board as this tutorial (`cmoda735t`), and has a PicoRV32 based simple SoC already implemented. We'll modify the SoC to remove modules not needed for this tutorial (`gpio_axi`, `i2c_axi`), and add in the our wrapper module. Let's walk through the changes key by key. 
+The example we copied over was targeting the same board as this tutorial (`cmoda735t`), and has a PicoRV32 based simple SoC already implemented. We'll modify the SoC to remove modules not needed for this tutorial (`gpio_axi`, `i2c_axi`), and add in the our wrapper module. Let's walk through the changes to each key the system definition file (`infrastructure_gen/examples/finn/simple_mnist/system.tml`). 
 
 ### DESCRIPTION
 Change the project name to `simple_mnist`
