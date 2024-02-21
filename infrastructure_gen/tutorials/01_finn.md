@@ -359,7 +359,7 @@ becomes
 ```toml
 ["BOARD:clk_i", "MODULE:cpu:clk","MODULE:cache:clk","MODULE:chip_manager:clk", "MODULE:debug:clk", "MODULE:timer:clk","MODULE:programmer:clk", "MODULE:finn:clk"],
 ```
-The naming convention using to specify the signal or interface involved in an interconnect is given in the form `MODULE:<module_instantiation_name>:<interface_name>:<optional_interface_signal_name>` if we are connecting a module interface or signal, and in the form `BOARD:<external_io_name>` if we are connecting an external I/O signal. The updating `INTERCONNECT` dictionary is given below. 
+The naming convention using to specify the signal or interface involved in an interconnect is given in the form `MODULE:<module_instantiation_name>:<interface_name>:<optional_interface_signal_name>` if we are connecting a module interface or signal, and in the form `BOARD:<external_io_name>` if we are connecting an external I/O signal. The updated `INTERCONNECT` dictionary is given below. 
 
 ```toml
 [INTERCONNECT]
