@@ -9,7 +9,7 @@ Almost all code and configuration changes will be given within each step. The tw
 - [Step 1: Creating a verilog wrapper module for the FINN generated design](#step-1-creating-a-verilog-wrapper-module-for-the-finn-generated-design)
 - [Step 2: Adding the module to the DISL configuration files](#step-2-adding-the-module-to-the-disl-configuration-files)
 - [Step 3: Copy an existing example to use as the starting point](#step-3-copy-an-existing-example-to-use-as-the-starting-point)
-- [Step 4: Modify the system definition file](#step-4-modify-the-system-definition-file)
+- [Step 4: Modify the system configuration file](#step-4-modify-the-system-configuration-file)
 - [Step 5: Update the softcore source files](#step-5-update-the-softcore-source-files)
 	-  [test.hex](#testhex)	
 - [Step 6: Update the host python files](#step-6-update-the-host-python-files)
@@ -184,8 +184,8 @@ mkdir infrastructure_gen/examples/finn
 cp -r infrastructure_gen/examples/edgetestbed/edgetestbed_jtag_uartprog_no_dram infrastructure_gen/examples/finn/simple_mnist
 ```
 
-## Step 4: Modify the system definition file
-The example we copied over was targeting the same board as this tutorial (`cmoda735t`), and has a PicoRV32 based simple SoC already implemented. We'll modify the SoC to remove modules not needed for this tutorial (`gpio_axi`, `i2c_axi`), and add in the our wrapper module. Let's walk through the changes to each key the system definition file (`infrastructure_gen/examples/finn/simple_mnist/system.tml`). 
+## Step 4: Modify the system configuration file
+The example we copied over was targeting the same board as this tutorial (`cmoda735t`), and has a PicoRV32 based simple SoC already implemented. We'll modify the SoC to remove modules not needed for this tutorial (`gpio_axi`, `i2c_axi`), and add in the our wrapper module. Let's walk through the changes to each key in the system configuration file (`infrastructure_gen/examples/finn/simple_mnist/system.tml`). 
 
 ### DESCRIPTION
 Change the project name to `simple_mnist`
