@@ -591,7 +591,7 @@ print("#define NUM_TESTS " + str(len(results)))
 ## Step 6: Update the host python files
 Since we'll be using FINN to create the Vivado project, we'll move the resulting compiled FPGA binary to the project build directory (using a tcl script shown later) - this way any changes in the FINN naming convention will not break this file. We'll also change the message being printed on the console. 
 
-To this we'll modify `infrastructure_gen/examples/finn/simple_mnist/src/test.py` so that:
+To do this we'll modify `infrastructure_gen/examples/finn/simple_mnist/src/test.py` so that:
 
 
 `bin_file = './edgetestbed_jtag_uartprog_no_dram/edgetestbed_jtag_uartprog_no_dram.runs/impl_1/top.bin'` -> `bin_file = './top.bin'`
@@ -639,7 +639,7 @@ fi
 cp run-docker.sh finn/run-docker.sh
 cd finn && ./run-docker.sh
 cd $CWD
-docker exec $(docker ps -qf "ancestor=xilinx/finn:xilinx_finn") /bin/bash -c 'source /opt/Xilinx/Vitis_HLS/2022.2/settings64.sh && cd /home/finn_user/finn/tutorials/fpga_flow && python build.py xc7a35tcpg236-1'
+docker exec $(docker ps -qf "ancestor=xilinx/finn:xilinx_finn") /bin/bash -c 'source $FINN_XILINX_PATH/Vitis_HLS/$FINN_XILINX_VERSION/settings64.sh && cd /home/finn_user/finn/tutorials/fpga_flow && python build.py xc7a35tcpg236-1'
 docker cp $(docker ps -qf "ancestor=xilinx/finn:xilinx_finn"):/home/finn_user/finn/tutorials/fpga_flow/output_tfc_w1a1_fpga/stitched_ip .
 docker cp $(docker ps -qf "ancestor=xilinx/finn:xilinx_finn"):/tmp/finn_dev_$USER /tmp
 vivado -nojournal -nolog -mode batch -source ./merge.tcl
