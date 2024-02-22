@@ -591,7 +591,7 @@ print("#define NUM_TESTS " + str(len(results)))
 ## Step 6: Update the host python files
 Since we'll be using FINN to create the Vivado project, we'll move the resulting compiled FPGA binary to the project build directory (using a tcl script shown later) - this way any changes in the FINN naming convention will not break this file. We'll also change the message being printed on the console. 
 
-To this we'll modify `infrastructure_gen/examples/finn/simple_mnist/src/test.py` so that:
+To do this, we'll modify `infrastructure_gen/examples/finn/simple_mnist/src/test.py` so that:
 
 
 `bin_file = './edgetestbed_jtag_uartprog_no_dram/edgetestbed_jtag_uartprog_no_dram.runs/impl_1/top.bin'` -> `bin_file = './top.bin'`
@@ -626,7 +626,9 @@ exec cp stitched_ip/finn_vivado_stitch_proj.runs/impl_1/top.bin .
 ```
 
 ## Step 9: Create a custom build script
-The default DISL flow creates a project build script that simply runs the Vivado compilation scripts. However, since we have to run FINN first, we'll create a custom one and add that to the `infrastructure_gen/examples/finn/simple_mnist/src` directory as well. Create the file `infrastructure_gen/examples/finn/simple_mnist/src/finn_run.sh` and add the following code to it. This will clone the FINN repo, patch it, run the container, modify the target part number of the MNIST example, copy over the generated files, run the script from Step 8, remove the container and finally generate the test vectors. At the end of this script, we'll have the `.bin` needed to reconfigure the FPGA. 
+The default DISL flow creates a project build script that simply runs the Vivado compilation scripts. However, since we have to run FINN first, we'll create a custom one and add that to the `infrastructure_gen/examples/finn/simple_mnist/src` directory as well. Create the file `infrastructure_gen/examples/finn/simple_mnist/src/finn_run.sh`, add the following code to it, and change both `/opt/Xilinx` and `2022.2` to your specific setup. 
+
+This will clone the FINN repo, patch it, run the container, modify the target part number of the MNIST example, copy over the generated files, run the script from Step 8, remove the container and finally generate the test vectors. At the end of this script, we'll have the `.bin` needed to reconfigure the FPGA. 
 
 ```bash
 FINN_ROOT="$PWD/finn"
