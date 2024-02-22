@@ -590,4 +590,23 @@
 			TYPE = "GENERAL"
 			DIRECTION = "SOURCE"
 			WIDTH = 1
+
+[finn_rv32_pcpi_wrapper]
+	TYPES = ["INTERCONNECT"]
+	PARAMETERS = ["OPCODE", "INPUT_WIDTH_BYTES"]
+	[finn_rv32_pcpi_wrapper.REQUIREMENTS]
+		INTERFACES = ["clk", "pcpi"]
+		[finn_rv32_pcpi_wrapper.REQUIREMENTS.INCLUDES]
+			COMMON = ["riscv_ci.v"]
+			BOARD = []
+	[finn_rv32_pcpi_wrapper.ENCODINGS]
+	[finn_rv32_pcpi_wrapper.INTERFACES.clk]
+			TYPE = "CLOCK"
+			DIRECTION = "SINK"
+	[finn_rv32_pcpi_wrapper.INTERFACES.pcpi]
+			TYPE = "PCPI"
+			DIRECTION = "SINK"
+			CLOCK = "clk"
+			WORD_WIDTH = 32
+
 #######################################################################

@@ -386,3 +386,59 @@ module laplacian_filter(pixel_overlayed,pixel_rgb,threshold,tl,tc,tr,cl,cc,cr,bl
 	wire [15:0] mod_lp = lp[15] ? (~lp) + 16'd1 : lp;
 	assign pixel_overlayed = mod_lp > threshold ? 16'b1111100000000000 : pixel_rgb;
 endmodule
+
+module finn_rv32_pcpi_wrapper(
+input clk,
+input        	pcpi_valid,
+input [31:0] 	pcpi_insn,
+input [31:0] 	pcpi_rs1,
+input [31:0] 	pcpi_rs2,
+output       	pcpi_wr,
+output  [31:0] 	pcpi_rd,
+output       	pcpi_wait,
+output 	    	pcpi_ready
+);
+
+parameter OPCODE = 127;
+parameter INPUT_WIDTH_BYTES = 49;
+
+wire [7:0] dout_tdata;
+wire dout_tready;
+wire dout_tvalid;
+reg [(INPUT_WIDTH_BYTES*8)-1:0] din_tdata;
+wire din_tready;
+reg din_tvalid;
+
+wire [2:0] cmd = pcpi_insn[14:12];
+wire cmd_reset = (cmd == 3'd0) ? 1'b1 : 1'b0;
+wire cmd_poll = (cmd == 3'd1) ? 1'b1 : 1'b0;
+wire cmd_push = (cmd == 3'd2) ? 1'b1 : 1'b0;
+wire cmd_load = (cmd == 3'd3) ? 1'b1 : 1'b0;
+wire cmd_pop = (cmd == 3'd4) ? 1'b1 : 1'b0;
+wire valid_insn  = (pcpi_insn[6:0] == OPCODE[6:0]) ? pcpi_valid : 0;
+assign pcpi_wait = 0;
+assign pcpi_wr = valid_insn;
+assign pcpi_ready = valid_insn;
+assign pcpi_rd = {22'd0, din_tready, dout_tvalid, dout_tdata};
+
+always @(posedge clk) begin
+    din_tvalid <= ((valid_insn && cmd_reset) || (din_tvalid && din_tready)) ? 0 : ((valid_insn && cmd_load) ? 1 : din_tvalid);
+    din_tdata <= (valid_insn && cmd_push) ? {din_tdata[(INPUT_WIDTH_BYTES*8)-64-1:0],pcpi_rs2, pcpi_rs1}: din_tdata;
+end
+
+
+finn_design_wrapper finn_design_wrapper (
+  .ap_clk                (clk               ),//i
+  .ap_rst_n              ((valid_insn && cmd_reset) ? 1'b0 : 1'b1),//i
+
+  .m_axis_0_tdata        (dout_tdata           ),//o
+  .m_axis_0_tready       (valid_insn && cmd_pop),//i
+  .m_axis_0_tvalid       (dout_tvalid          ),//o
+
+  .s_axis_0_tdata        (din_tdata           ),//i
+  .s_axis_0_tready       (din_tready		  ),//o
+  .s_axis_0_tvalid       (din_tvalid      ) //i
+);
+
+endmodule
+

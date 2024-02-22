@@ -1,0 +1,239 @@
+[DESCRIPTION]
+NAME = "simple_mnist"
+
+[REQUIREMENTS]
+TOOLS = ["pyjtag"]
+BOARDS = ["cmoda735t"]
+
+[EXTERNAL_IO]
+PORTS = ["clk_i","uart_tx","uart_rx"]
+
+
+[INSTANTIATIONS]
+	[INSTANTIATIONS.cache]
+		MODULE = "bram"
+		PARAMETERS.MEMORY_SIZE = 256
+	[INSTANTIATIONS.timer]
+		MODULE = "timer_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+	[INSTANTIATIONS.debug]
+		MODULE = "uart_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+		PARAMETERS.UART_BAUD_RATE_BPS = 921600
+		PARAMETERS.DATA_WIDTH = 32
+	[INSTANTIATIONS.chip_manager]
+		MODULE = "jtag_chip_manager"
+	[INSTANTIATIONS.programmer]
+		MODULE = "progloader_axi"
+		PARAMETERS.CLOCK_FREQ_MHZ = 12
+		PARAMETERS.UART_BAUD_RATE_BPS = 921600
+	[INSTANTIATIONS.finn]
+		MODULE = "finn_rv32_pcpi_wrapper"
+		PARAMETERS.OPCODE = 43
+		PARAMETERS.INPUT_WIDTH_BYTES = 49
+	[INSTANTIATIONS.cpu]
+		MODULE = "picorv32_axi"
+		ARCH = "rv32i"
+		ABI = "ilp32"
+		CROSS = "riscv32-unknown-elf-"
+		CROSSCFLAGS = "-O3 -Wno-int-conversion -ffreestanding -nostdlib"
+		CROSSLDFLAGS = "-ffreestanding -nostdlib  -Wl,-M"
+		LINKER_REQUIREMENTS = ["muldi3.S", "div.S", "riscv-asm.h"]
+		MEMORY = "cache"
+		PARAMETERS.ENABLE_INTERRUPTS = 0
+		PARAMETERS.ENABLE_PCPI = 1
+		PARAMETERS.INSTRUCTION_MEMORY_STARTING_ADDRESS = 0
+		PARAMETERS.INTERRUPT_HANDLER_STARTING_ADDRESS = 16
+		PARAMETERS.INSTRUCTION_AND_DATA_MEMORY_SIZE_BYTES = 32768
+		[INSTANTIATIONS.cpu.MAP]
+			[INSTANTIATIONS.cpu.MAP.cache]
+				ORIGIN = "0x00000000"
+				LENGTH = "0x00040000"
+			[INSTANTIATIONS.cpu.MAP.debug]
+				ORIGIN = "0x00040004"
+				LENGTH = "0x00000004"
+			[INSTANTIATIONS.cpu.MAP.timer]
+				ORIGIN = "0x00040008"
+				LENGTH = "0x00000004"
+
+# All constant numbers must be strings for the remaining system
+
+
+[INTRINSICS]
+	[[INTRINSICS.ASSIGNMENT]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:jtag_reset"
+		INPUT_SIGNAL =  "MODULE:chip_manager:control"
+		SIGNAL_BITS = "[0]"
+	[[INTRINSICS.ASSIGNMENT]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:reprogram"
+		INPUT_SIGNAL =  "MODULE:chip_manager:control"
+		SIGNAL_BITS = "[1]"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_resetn"
+		INPUT_SIGNAL_1 =  "1'd1"
+		OPERATION = "^"
+		INPUT_SIGNAL_2 =  "CUSTOM:reprogram"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_mem_wvalid_and_wready"
+		INPUT_SIGNAL_1 =  "MODULE:cpu:mem:axi_wvalid"
+		OPERATION = "&"
+		INPUT_SIGNAL_2 =  "MODULE:cpu:mem:axi_wready"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_mem_wvalid_and_wready_resetn"
+		INPUT_SIGNAL_1 =  "CUSTOM:cpu_mem_wvalid_and_wready"
+		OPERATION = "&"
+		INPUT_SIGNAL_2 =  "CUSTOM:cpu_resetn"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:debug:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:debug_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:debug:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.debug.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:debug:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:debug_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:debug:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.debug.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:timer:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:timer_a_axi_awaddr"
+		INPUT_SIGNAL_1 =  "MODULE:timer:a:axi_awaddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.timer.ORIGIN"
+	[[INTRINSICS.COMBINATIONAL]]
+		"CUSTOM_SIGNAL_WIDTH" = "PARAMETER:timer:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:timer_a_axi_araddr"
+		INPUT_SIGNAL_1 =  "MODULE:timer:a:axi_araddr"
+		OPERATION = "-"
+		INPUT_SIGNAL_2 =  "SYSTEM:INSTANTIATIONS.cpu.MAP.timer.ORIGIN"
+	[[INTRINSICS.SEQUENTIAL_HOLD]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:cpu:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_axi_araddr"
+		INTERNAL_SIGNAL_NAME = "INTERNAL:CUSTOM:cpu_axi_araddr"
+		CUSTOM_SIGNAL_DEFAULT_VALUE = 0
+		CLOCK = "MODULE:cpu:clk"
+		TRIGGER = "MODULE:cpu:mem:axi_arvalid"
+		HOLD_VALUE = "MODULE:cpu:mem:axi_araddr"
+	[[INTRINSICS.SEQUENTIAL_HOLD]]
+		CUSTOM_SIGNAL_WIDTH = "PARAMETER:cpu:ADDR_WIDTH"
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_axi_awaddr"
+		INTERNAL_SIGNAL_NAME = "INTERNAL:CUSTOM:cpu_axi_awaddr"
+		CUSTOM_SIGNAL_DEFAULT_VALUE =  0
+		CLOCK = "MODULE:cpu:clk"
+		TRIGGER = "MODULE:cpu:mem:axi_awvalid"
+		HOLD_VALUE = "MODULE:cpu:mem:axi_awaddr"
+	[[INTRINSICS.SEQUENTIAL_IFELSEIF]]
+		CUSTOM_SIGNAL_WIDTH = 1
+		CUSTOM_SIGNAL_NAME = "CUSTOM:cpu_mem_b_valid"
+		CUSTOM_SIGNAL_DEFAULT_VALUE =  0
+		CLOCK = "MODULE:cpu:clk"
+		CONDITION_1 = "CUSTOM:cpu_mem_wvalid_and_wready_resetn"
+		ASSIGNMENT_IF_CONDITION_1_TRUE = "1"
+		CONDITION_2 = "MODULE:cpu:mem:b_ready"
+		ASSIGNMENT_IF_CONDITION_2_TRUE = "0"
+
+[INTERCONNECT]
+	STATIC = [
+				["BOARD:clk_i", "MODULE:cpu:clk","MODULE:cache:clk","MODULE:chip_manager:clk", "MODULE:debug:clk", "MODULE:timer:clk","MODULE:programmer:clk", "MODULE:finn:clk"],
+				["BOARD:uart_rx" , "MODULE:debug:urx", "MODULE:programmer:urx"],
+				["BOARD:uart_tx" , "MODULE:debug:utx"],
+				["CUSTOM:cpu_resetn","MODULE:cpu:resetn"],
+				["CUSTOM:reprogram", "MODULE:debug:rst", "MODULE:timer:rst", "MODULE:programmer:reprogram"],
+				["CUSTOM:jtag_reset" , "MODULE:chip_manager:rst", "MODULE:cache:rst"],
+				["MODULE:cpu:pcpi","MODULE:finn:pcpi"]
+	]
+
+	OVERRIDES = [ # replace port signal assignments at the end with the overrides
+			["MODULE:cpu:mem:b_valid","CUSTOM:cpu_mem_b_valid"],
+			["MODULE:cpu:mem:b_response", "0"],
+			["MODULE:chip_manager:a:b_response", "0"],
+			["MODULE:chip_manager:a:b_valid", "1"],
+			["MODULE:programmer:a:b_response", "0"],
+			["MODULE:programmer:a:b_valid", "1"],
+			["MODULE:cpu:irq", "0"],
+			["MODULE:debug:a:axi_awaddr","CUSTOM:debug_a_axi_awaddr"],
+			["MODULE:debug:a:axi_araddr","CUSTOM:debug_a_axi_araddr"],
+			["MODULE:timer:a:axi_awaddr","CUSTOM:timer_a_axi_awaddr"],
+			["MODULE:timer:a:axi_araddr","CUSTOM:timer_a_axi_araddr"],
+			["MODULE:chip_manager:a:axi_rvalid","0"],
+			["MODULE:chip_manager:a:axi_arready","0"],
+			["MODULE:chip_manager:a:axi_awready","0"],
+			["MODULE:chip_manager:a:axi_wready","0"],
+			["MODULE:chip_manager:a:b_valid","0"]
+	]
+
+	[INTERCONNECT.DYNAMIC."MODULE:cpu:mem"]
+		GROUP_SELECT = "CUSTOM:reprogram"
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:cpu:mem".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_MANY"
+			SELECT_VALUE = 0
+			ADDRESS_MAP = [
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.cache MODULE:cache:cpu",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.debug MODULE:debug:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.timer MODULE:timer:a"
+			]
+			HANDSHAKE_MAP = [
+						"WRITE_ADDRESS MODULE:cpu:mem:axi_awaddr",
+						"READ_ADDRESS MODULE:cpu:mem:axi_araddr",
+						"WRITE_DATA CUSTOM:cpu_axi_awaddr",
+						"READ_DATA CUSTOM:cpu_axi_araddr"
+			]
+		[[INTERCONNECT.DYNAMIC."MODULE:cpu:mem".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_MANY"
+			SELECT_VALUE = 1
+			ADDRESS_MAP = [
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.debug MODULE:debug:a",
+					"SYSTEM:INSTANTIATIONS.cpu.MAP.timer MODULE:timer:a"
+			]
+			HANDSHAKE_MAP = [
+						"WRITE_ADDRESS MODULE:cpu:mem:axi_awaddr",
+						"READ_ADDRESS MODULE:cpu:mem:axi_araddr",
+						"WRITE_DATA CUSTOM:cpu_axi_awaddr",
+						"READ_DATA CUSTOM:cpu_axi_araddr"
+			]
+	
+		
+	[INTERCONNECT.DYNAMIC."MODULE:cache:cpu"]
+		GROUP_SELECT = "CUSTOM:reprogram"
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:cache:cpu".GROUPS]]
+			SELECT_VALUE = 0
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+		[[INTERCONNECT.DYNAMIC."MODULE:cache:cpu".GROUPS]]
+			SELECT_VALUE = 1
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:programmer:a"
+
+
+	[INTERCONNECT.DYNAMIC."MODULE:debug:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:debug:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+			
+
+	[INTERCONNECT.DYNAMIC."MODULE:timer:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA", "READ_ADDRESS", "READ_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:timer:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cpu:mem"
+			
+
+	[INTERCONNECT.DYNAMIC."MODULE:programmer:a"]
+		GROUP_SELECT = ""
+		HANDSHAKES = ["WRITE_ADDRESS", "WRITE_DATA"]
+		[[INTERCONNECT.DYNAMIC."MODULE:programmer:a".GROUPS]]
+			INTERCONNECT_TYPE = "ONE_TO_ONE"
+			INTERFACE = "MODULE:cache:cpu"
+
+
