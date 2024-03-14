@@ -400,7 +400,7 @@
 	TYPES = ["PERIPHERAL"]
 	PARAMETERS = ["ADDR_WIDTH","DATA_WIDTH","CLOCK_DIVISOR"]
 	[spi_axi.REQUIREMENTS]
-		INTERFACES = ["clk", "rst", "a", "sck", "miso", "mosi"]
+		INTERFACES = ["clk", "rst", "a", "spi"]
 		[spi_axi.REQUIREMENTS.INCLUDES]
 			COMMON = ["soc_components.v"]
 			BOARD = []
@@ -456,7 +456,7 @@
 			WIDTH = 1
 	[progloader_axi.INTERFACES.busy]
 			TYPE = "GENERAL"
-			DIRECTION = "SINK"
+			DIRECTION = "SOURCE"
 			WIDTH = 1
 #######################################################################
 [picorv32_axi]
